@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Séquence pour les références -->
+    <record id="seq_gestion_formation" model="ir.sequence">
+        <field name="name">Formation Sequence</field>
+        <field name="code">gestion.formation</field>
+        <field name="prefix">FORM</field>
+        <field name="padding">5</field>
+        <field name="number_next">1</field>
+        <field name="number_increment">1</field>
+    </record>
+
+    <!-- Vue Tree (Liste) -->
+    <record id="view_gestion_formation_tree" model="ir.ui.view">
+        <field name="name">gestion.formation.tree</field>
+        <field name="model">gestion.formation</field>
+        <field name="arch" type="xml">
+            <tree string="Formations" decoration-success="statut=='termine'" 
+                  decoration-info="statut=='en_cours'" 
+                  decoration-muted="statut=='annule'">
+                <field name="reference"/>
+                <field name="titre"/>
+                <field name="categorie_formation"/>
+                <field name="responsable_id"/>
+                <field name="date_debut"/>
+                <field name="date_fin"/>
+                <field name="nombre_inscrits"/>
+                <field name="statut" widget="badge" 
+                       decoration-success="statut=='termine'"
+                       decoration-info="statut=='en_cours'"
+                       decoration-warning="statut=='planifie'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Vue Form (Formulaire) -->
+    <record id="view_gestion_formation_form" model="ir.ui.view">
+        <field name="name">gestion.formation.form</field>
+        <field name="model">gestion.formation</field>
+        <field name="arch" type="xml">
+            <form string="Formation">
+                <header>
+                    <button name="action_planifier" string="Planifier" 
+                            type="object" class="btn-primary"
+                            invisible="statut != 'brouillon'"/>
+                    <button name="action_demarrer" string="Démarrer" 
+                            type="object" class="btn-success"
+                            invisible="statut != 'planifie'"/>
+                    <button name="action_terminer" string="Terminer" 
+                            type="object" class="btn-info"
+                            invisible="statut != 'en_cours'"/>
+                    <button name="action_annuler" string="Annuler" 
+                            type="object" class="btn-danger"
+                            invisible="statut in ['termine', 'annule']"/>
+                    <field name="statut" widget="statusbar" 
+                           statusbar_visible="brouillon,planifie,en_cours,termine"/>
+                </header>
+                
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" 
+                                name="action_demarrer" icon="fa-users">
+                            <field string="Inscrits" name="nombre_inscrits" widget="statinfo"/>
+                        </button>
+                    </div>
+                    
+                    <div class="oe_title">
+                        <h1>
+                            <field name="reference" readonly="1"/>
+                        </h1>
+                        <h2>
+                            <field name="titre" placeholder="Titre de la formation..."/>
+                        </h2>
+                    </div>
+                    
+                    <group>
+                        <group string="Informations générales">
+                            <field name="type_formation"/>
+                            <field name="categorie_formation"/>
+                            <field name="responsable_id"/>
+                            <field name="lieu"/>
+                        </group>
+                        <group string="Planification">
+                            <field name="date_debut"/>
+                            <field name="date_fin"/>
+                            <field name="duree_heures" readonly="1"/>
+                            <field name="capacite_max"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Description">
+                            <group>
+                                <field name="description" widget="html"/>
+                                <field name="objectifs"/>
+                                <field name="prerequis"/>
+                            </group>
+                        </page>
+                        
+                        <page string="Formateurs">
+                            <field name="formateur_ids">
+                                <tree editable="bottom">
+                                    <field name="name"/>
+                                    <field name="email"/>
+                                    <field name="phone"/>
+                                </tree>
+                            </field>
+                        </page>
+                        
+                        <page string="Inscrits">
+                            <field name="inscrits_ids">
+                                <tree editable="bottom">
+                                    <field name="name"/>
+                                    <field name="email"/>
+                                    <field name="phone"/>
+                                </tree>
+                            </field>
+                        </page>
+                        
+                        <page string="Documents">
+                            <field name="document_ids">
+                                <tree>
+                                    <field name="nom"/>
+                                    <field name="type_document"/>
+                                    <field name="date_upload"/>
+                                </tree>
+                                <form>
+                                    <group>
+                                        <field name="nom"/>
+                                        <field name="type_document"/>
+                                        <field name="fichier" filename="filename"/>
+                                        <field name="filename" invisible="1"/>
+                                        <field name="description"/>
+                                    </group>
+                                </form>
+                            </field>
+                        </page>
+                        
+                        <page string="Évaluation">
+                            <group>
+                                <field name="note_moyenne"/>
+                                <field name="evaluation"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vue Kanban -->
+    <record id="view_gestion_formation_kanban" model="ir.ui.view">
+        <field name="name">gestion.formation.kanban</field>
+        <field name="model">gestion.formation</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" default_group_by="statut">
+                <field name="titre"/>
+                <field name="date_debut"/>
+                <field name="nombre_inscrits"/>
+                <field name="capacite_max"/>
+                <field name="statut"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <div class="o_kanban_record_top">
+                                <strong><field name="titre"/></strong>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <field name="categorie_formation"/>
+                                <br/>
+                                <i class="fa fa-calendar"/> <field name="date_debut"/>
+                                <br/>
+                                <i class="fa fa-users"/> <field name="nombre_inscrits"/>/<field name="capacite_max"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Recherche et filtres -->
+    <record id="view_gestion_formation_search" model="ir.ui.view">
+        <field name="name">gestion.formation.search</field>
+        <field name="model">gestion.formation</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="titre"/>
+                <field name="responsable_id"/>
+                <field name="reference"/>
+                <filter string="En cours" name="en_cours" 
+                        domain="[('statut','=','en_cours')]"/>
+                <filter string="Planifiées" name="planifie" 
+                        domain="[('statut','=','planifie')]"/>
+                <filter string="Brouillon" name="brouillon" 
+                        domain="[('statut','=','brouillon')]"/>
+                <filter string="Formation Continue" name="continue" 
+                        domain="[('categorie_formation','=','continue')]"/>
+                <filter string="Formation Initiale" name="initiale" 
+                        domain="[('categorie_formation','=','initiale')]"/>
+                <separator/>
+                <filter string="Toutes" name="all" domain="[]"/>
+                <group expand="0" string="Grouper par">
+                    <filter string="Statut" name="group_statut" 
+                            context="{'group_by':'statut'}"/>
+                    <filter string="Responsable" name="group_responsable" 
+                            context="{'group_by':'responsable_id'}"/>
+                    <filter string="Catégorie" name="group_categorie" 
+                            context="{'group_by':'categorie_formation'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action (SANS FILTRE PAR DÉFAUT) -->
+    <record id="action_gestion_formation" model="ir.actions.act_window">
+        <field name="name">Formations</field>
+        <field name="res_model">gestion.formation</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <!-- PAS DE FILTRE : Affiche TOUTES les formations -->
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créer votre première formation
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu principal -->
+    <menuitem id="menu_gestion_formation_root" 
+              name="Formations" 
+              sequence="10"/>
+
+    <!-- Sous-menus -->
+    <menuitem id="menu_gestion_formation" 
+              name="Toutes les Formations" 
+              parent="menu_gestion_formation_root" 
+              action="action_gestion_formation" 
+              sequence="10"/>
+
+    <menuitem id="menu_configuration" 
+              name="Configuration" 
+              parent="menu_gestion_formation_root" 
+              sequence="100"/>
+</odoo>
